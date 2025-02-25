@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FairEval Sentiment Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 40px 0;
+            background-color: #f5f5f5;
+        }
+        .result-card {
+            transition: transform 0.3s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+        .sentiment-positive {
+            color: #198754;
+            font-weight: bold;
+        }
+        .sentiment-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            height: 5px;
+            transition: width 0.5s ease;
+        }
+        .model-description {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">FairEval Sentiment Analysis</h3>
+                        <p class="mb-0">Evaluate comments using four different sentiment analysis models</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="sentimentForm">
+                            <div class="mb-3">
+                                <label for="comment" class="form-label">Enter your comment:</label>
+                                <textarea class="form-control" id="comment" name="comment" rows="4" required placeholder="Type or paste a comment here to analyze its sentiment..."></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Analyze Sentiment</button>
+                            </div>
+                        </form>
+                        
+                        <div id="loading" class="loading">
+                            <div class="progress my-3">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <p>Analyzing comment with multiple models...</p>
+                        </div>
+                        
+                        <div id="results" class="row mt-4" style="display: none;">
+                            <h4 class="mb-3">Sentiment Analysis Results:</h4>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="card result-card h-100">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Linear SVC</h5>
+                                        <p class="model-description mb-0">Traditional machine learning model with TF-IDF features</p>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Sentiment: <span id="linearsvc-pred" class=""></span></p>
+                                        <p>Confidence Score: <span id="linearsvc-score"></span></p>
+                                        <div class="progress">
+                                            <div id="linearsvc-bar" class="progress-bar" role="progressbar" style="width: 50%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="card result-card h-100">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Random Forest</h5>
+                                        <p class="model-description mb-0">Ensemble tree-based model with TF-IDF features</p>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Sentiment: <span id="rf-pred" class=""></span></p>
+                                        <p>Confidence Score: <span id="rf-score"></span></p>
+                                        <div class="progress">
+                                            <div id="rf-bar" class="progress-bar" role="progressbar" style="width: 50%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="card result-card h-100">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">CNN</h5>
+                                        <p class="model-description mb-0">Convolutional Neural Network with word embeddings</p>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Sentiment: <span id="cnn-pred" class=""></span></p>
+                                        <p>Confidence Score: <span id="cnn-score"></span></p>
+                                        <div class="progress">
+                                            <div id="cnn-bar" class="progress-bar" role="progressbar" style="width: 50%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="card result-card h-100">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">LSTM</h5>
+                                        <p class="model-description mb-0">Bidirectional LSTM with attention mechanism</p>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Sentiment: <span id="lstm-pred" class=""></span></p>
+                                        <p>Confidence Score: <span id="lstm-score"></span></p>
+                                        <div class="progress">
+                                            <div id="lstm-bar" class="progress-bar" role="progressbar" style="width: 50%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 mt-3">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Comment</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p id="analyzed-comment"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('sentimentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading indicator
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            
+            const progressBar = document.querySelector('.progress-bar');
+            progressBar.style.width = '0%';
+            
+            // Animate progress bar
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${Math.min(progress, 90)}%`;
+                if (progress >= 90) {
+                    clearInterval(progressInterval);
+                }
+            }, 100);
+            
+            // Get form data
+            const formData = new FormData(this);
+            
+            // Send request to backend
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                setTimeout(() => {
+                    // Hide loading indicator
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    // Update results
+                    updateResults(data);
+                    
+                    // Show results
+                    document.getElementById('results').style.display = 'block';
+                }, 500);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loading').style.display = 'none';
+                alert('An error occurred while processing your request.');
+            });
+        });
+        
+        function updateResults(data) {
+            // Update analyzed comment
+            document.getElementById('analyzed-comment').textContent = data.comment;
+            
+            // Update LinearSVC results
+            document.getElementById('linearsvc-pred').textContent = data.linearsvc.prediction;
+            document.getElementById('linearsvc-pred').className = 
+                data.linearsvc.prediction === 'Positive' ? 'sentiment-positive' : 'sentiment-negative';
+            
+            // For LinearSVC, transform the raw score to a probability-like value
+            const svcScore = Math.max(0, Math.min(1, (data.linearsvc.score + 2) / 4));
+            document.getElementById('linearsvc-score').textContent = svcScore.toFixed(2);
+            document.getElementById('linearsvc-bar').style.width = `${svcScore * 100}%`;
+            document.getElementById('linearsvc-bar').className = 
+                data.linearsvc.prediction === 'Positive' ? 'progress-bar bg-success' : 'progress-bar bg-danger';
+            
+            // Update Random Forest results
+            document.getElementById('rf-pred').textContent = data.rf.prediction;
+            document.getElementById('rf-pred').className = 
+                data.rf.prediction === 'Positive' ? 'sentiment-positive' : 'sentiment-negative';
+            document.getElementById('rf-score').textContent = data.rf.score.toFixed(2);
+            document.getElementById('rf-bar').style.width = `${data.rf.score * 100}%`;
+            document.getElementById('rf-bar').className = 
+                data.rf.prediction === 'Positive' ? 'progress-bar bg-success' : 'progress-bar bg-danger';
+            
+            // Update CNN results
+            document.getElementById('cnn-pred').textContent = data.cnn.prediction;
+            document.getElementById('cnn-pred').className = 
+                data.cnn.prediction === 'Positive' ? 'sentiment-positive' : 'sentiment-negative';
+            document.getElementById('cnn-score').textContent = data.cnn.score.toFixed(2);
+            document.getElementById('cnn-bar').style.width = `${data.cnn.score * 100}%`;
+            document.getElementById('cnn-bar').className = 
+                data.cnn.prediction === 'Positive' ? 'progress-bar bg-success' : 'progress-bar bg-danger';
+            
+            // Update LSTM results
+            document.getElementById('lstm-pred').textContent = data.lstm.prediction;
+            document.getElementById('lstm-pred').className = 
+                data.lstm.prediction === 'Positive' ? 'sentiment-positive' : 'sentiment-negative';
+            document.getElementById('lstm-score').textContent = data.lstm.score.toFixed(2);
+            document.getElementById('lstm-bar').style.width = `${data.lstm.score * 100}%`;
+            document.getElementById('lstm-bar').className = 
+                data.lstm.prediction === 'Positive' ? 'progress-bar bg-success' : 'progress-bar bg-danger';
+        }
+    </script>
+</body>
+</html>
